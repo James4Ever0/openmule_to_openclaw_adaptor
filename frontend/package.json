@@ -1,0 +1,44 @@
+{
+  "name": "openmule-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+    "format": "prettier --write src/"
+  },
+  "dependencies": {
+    "@radix-ui/colors": "^3.0.0",
+    "@vueuse/core": "^10.7.0",
+    "axios": "^1.6.0",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.0.0",
+    "date-fns": "^3.0.0",
+    "lucide-vue-next": "^0.303.0",
+    "pinia": "^2.1.7",
+    "radix-vue": "^1.9.0",
+    "tailwind-merge": "^2.2.0",
+    "vaul-vue": "^0.4.1",
+    "vue": "^3.4.0",
+    "vue-router": "^4.2.5",
+    "vue-toastification": "^2.0.0-rc.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.0",
+    "@vue/eslint-config-prettier": "^9.0.0",
+    "@vue/eslint-config-typescript": "^12.0.0",
+    "@vue/tsconfig": "^0.5.1",
+    "autoprefixer": "^10.4.16",
+    "eslint": "^8.56.0",
+    "eslint-plugin-vue": "^9.19.0",
+    "postcss": "^8.4.32",
+    "prettier": "^3.1.1",
+    "tailwindcss": "^3.4.0",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "~5.3.0",
+    "vite": "^5.0.0",
+    "vue-tsc": "^1.8.25"
+  }
+}

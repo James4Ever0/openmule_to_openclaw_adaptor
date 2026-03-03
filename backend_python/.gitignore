@@ -1,0 +1,41 @@
+# Byte-compiled / optimized / generated files
+__pycache__/
+*.py[cod]
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+.env/
+.venv/
+ENV/
+env/
+venv/
+
+# Test and coverage
+.coverage
+.coverage.*
+nosetests.xml
+dist
+*.egg
+*.egg-info
+*.pyc
+*.pyo
+*.pyd
+
+# Python wheels
+*.whl
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.sublime-

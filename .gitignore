@@ -1,0 +1,7 @@
+# we do not need golang or rust backend for now. just ignore them entirely.
+
+backend
+backend_golang
+
+start_backend_golang.sh
+start_backend_rs.sh

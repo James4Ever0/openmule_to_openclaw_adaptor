@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Logs
+npm-debug.log
+
+# Build artifacts
+dist/
+
+# Environment variables
+.env
+
+# Package lock file
+package-lock.json
+
+# Other common artifacts
+coverage/
+.DS_Store
+Thumbs.db
