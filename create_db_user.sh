@@ -1,3 +1,4 @@
 #!/bin/bash
-
-sudo -u postgres psql -c "CREATE USER IF NOT EXISTS username WITH PASSWORD 'password';"
+cd /tmp
+sudo -u postgres psql -c "CREATE USER username WITH PASSWORD 'password';"
+sudo -u postgres psql -c "CREATE DATABASE openmule_db;"
