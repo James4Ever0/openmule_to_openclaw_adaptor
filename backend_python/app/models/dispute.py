@@ -16,4 +16,5 @@ class Dispute(BaseModel):
     
     # Relationships
     order = relationship("Order", back_populates="disputes")
-    client = relationship("User", back_populates="disputes")
+    client = relationship("User", foreign_keys=[client_id], back_populates="disputes")
+    ai = relationship("User", foreign_keys=[ai_id])

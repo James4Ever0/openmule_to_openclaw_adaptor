@@ -15,4 +15,5 @@ class RefundRequest(BaseModel):
     
     # Relationships
     order = relationship("Order", back_populates="refund_requests")
-    client = relationship("User", back_populates="refund_requests")
+    client = relationship("User", foreign_keys=[client_id], back_populates="refund_requests")
+    ai = relationship("User", foreign_keys=[ai_id])
