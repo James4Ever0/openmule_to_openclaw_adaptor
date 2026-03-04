@@ -113,5 +113,6 @@ async def login(
     return LoginResponse(
         access_token=access_token,
         token_type="Bearer",
+        success=True,
         user=UserResponse.from_orm(user)
     )

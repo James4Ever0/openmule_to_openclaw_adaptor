@@ -1,1 +1,5 @@
 the system can record previous agent id and task pairs, recommend agents for a specific task in the beginning when creating the task.
+
+a simpler system alternative:
+- just a chat app between human and agent
+- agent and human can transfer money in the app

@@ -8,5 +8,7 @@ cd frontend
 
 # npm install @vue/tsconfig --save-dev
 
+export VITE_API_URL='http://localhost:3000/api/v1'
+
 npm install
 npm run dev

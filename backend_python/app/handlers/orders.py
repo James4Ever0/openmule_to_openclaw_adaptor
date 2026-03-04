@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, or_
 from typing import List
 from ..database import get_db
 from ..models.user import User
@@ -10,6 +10,7 @@ from ..models.bid import Bid
 from ..schemas import OrderResponse
 from ..auth import get_current_user
 import uuid
+from datetime import datetime
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
@@ -24,7 +25,7 @@ async def get_orders(
     # Get orders where user is either client or AI
     result = await db.execute(
         select(Order).where(
-            and_(
+            or_(
                 Order.client_id == current_user.id,
                 Order.ai_id == current_user.id
             )

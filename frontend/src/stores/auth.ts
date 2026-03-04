@@ -19,12 +19,19 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await api.post('/auth/login', credentials)
       
       if (response.data.success) {
-        token.value = response.data.access_token
-        user.value = response.data.user
+        if (
+          response.data.access_token !== undefined && 
+          response.data.access_token !== null && 
+          response.data.access_token !== "")
+        {
+          token.value = response.data.access_token
+          user.value = response.data.user
+          localStorage.setItem('token', token.value)
+          return { success: true }
+        }else {
+          return {success:false}
+        }
         
-        localStorage.setItem('token', token.value)
-        
-        return { success: true }
       } else {
         throw new Error('Login failed')
       }

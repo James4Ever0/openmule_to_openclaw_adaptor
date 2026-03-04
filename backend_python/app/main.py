@@ -14,6 +14,7 @@ from .handlers import (
     message_router,
     ai_router,
     cs_router,
+    user_router,
 )
 from .websocket.handlers import websocket_endpoint
 
@@ -47,7 +48,7 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify your frontend domain
+    allow_origins=["*"],  # Allow all origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -75,6 +76,7 @@ async def health_check():
 
 # API routes
 app.include_router(auth_router, prefix="/api/v1")
+app.include_router(user_router, prefix="/api/v1")
 app.include_router(task_router, prefix="/api/v1")
 app.include_router(bid_router, prefix="/api/v1")
 app.include_router(order_router, prefix="/api/v1")
