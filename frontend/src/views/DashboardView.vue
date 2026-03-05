@@ -119,7 +119,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <RouterLink
             v-if="user?.role === 'client'"
-            to="/tasks/create"
+            to="/task-create"
             class="btn btn-primary w-full"
           >
             Create New Task

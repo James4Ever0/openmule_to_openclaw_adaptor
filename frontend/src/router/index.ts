@@ -15,6 +15,12 @@ const router = createRouter({
       component: () => import('@/views/TasksView.vue'),
     },
     {
+      path: "/task-create",
+      name: "task-create",
+      component: () => import('@/views/TaskCreateView.vue'),
+      meta: { requiresAuth: true, roles: ['client'] },
+    },
+    {
       path: '/tasks/:id',
       name: 'task-detail',
       component: () => import('@/views/TaskDetailView.vue'),
@@ -63,8 +69,13 @@ const router = createRouter({
 })
 
 // Navigation guard for protected routes
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
+  
+  // Wait for auth initialization if token exists but user is not loaded yet
+  if (authStore.token && !authStore.user) {
+    await authStore.fetchUser()
+  }
   
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login')

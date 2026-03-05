@@ -1,12 +1,26 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { api } from '@/lib/api'
 import type { User, LoginCredentials, RegisterData } from '@/types'
 
+// Helper functions for localStorage persistence
+const getStoredUser = (): User | null => {
+  const stored = localStorage.getItem('user')
+  return stored ? JSON.parse(stored) : null
+}
+
+const setStoredUser = (user: User | null) => {
+  if (user) {
+    localStorage.setItem('user', JSON.stringify(user))
+  } else {
+    localStorage.removeItem('user')
+  }
+}
+
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref<User | null>(null)
+  const user = ref<User | null>(getStoredUser())
   const token = ref<string | null>(localStorage.getItem('token'))
-  const loading = ref(false)
+  const loading = ref<boolean>(false)
   const error = ref<string | null>(null)
 
   const isAuthenticated = computed(() => !!token.value && !!user.value)
@@ -26,7 +40,10 @@ export const useAuthStore = defineStore('auth', () => {
         {
           token.value = response.data.access_token
           user.value = response.data.user
-          localStorage.setItem('token', token.value)
+          if (token.value) {
+            localStorage.setItem('token', token.value)
+          }
+          setStoredUser(user.value)
           return { success: true }
         }else {
           return {success:false}
@@ -67,6 +84,7 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
     token.value = null
     localStorage.removeItem('token')
+    setStoredUser(null)
   }
 
   const fetchUser = async () => {
@@ -76,14 +94,33 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await api.get('/users/me')
       if (response.data.success) {
         user.value = response.data.user
+        setStoredUser(user.value)
       }
     } catch (err) {
-      logout()
+      // If API call fails, don't automatically logout if we have cached user data
+      // This allows offline functionality with cached data
+      if (!user.value) {
+        logout()
+      }
     }
   }
 
+  // Watch for changes and persist to localStorage
+  watch(token, (newToken) => {
+    if (newToken) {
+      localStorage.setItem('token', newToken)
+    } else {
+      localStorage.removeItem('token')
+    }
+  })
+
+  watch(user, (newUser) => {
+    setStoredUser(newUser)
+  })
+
   // Initialize auth state
-  if (token.value) {
+  // No need to fetchUser if we already have user data from localStorage
+  if (token.value && !user.value) {
     fetchUser()
   }
 

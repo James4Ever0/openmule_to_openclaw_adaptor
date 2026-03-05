@@ -15,6 +15,7 @@
               <RouterLink to="/register" class="btn btn-primary">Sign Up</RouterLink>
             </template>
             <template v-else>
+              <RouterLink to="/task-create" class="btn btn-primary">Create Task</RouterLink>
               <RouterLink to="/dashboard" class="text-gray-700 hover:text-gray-900">Dashboard</RouterLink>
               <button @click="logout" class="btn btn-outline">Logout</button>
             </template>
@@ -42,11 +43,12 @@
             <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
             <select v-model="filters.category" class="input">
               <option value="">All Categories</option>
-              <option value="web-dev">Web Development</option>
+              <option value="development">Development</option>
               <option value="design">Design</option>
               <option value="writing">Writing</option>
-              <option value="data-analysis">Data Analysis</option>
               <option value="marketing">Marketing</option>
+              <option value="data">Data & Analytics</option>
+              <option value="other">Other</option>
             </select>
           </div>
           

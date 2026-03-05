@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
-from typing import List
+from sqlalchemy import select, and_, func
+from sqlalchemy.orm import selectinload
+from typing import List, Optional
 from ..database import get_db
 from ..models.user import User
 from ..models.task import Task
+from ..models.bid import Bid
 from ..schemas import TaskCreate, TaskResponse
 from ..auth import get_current_user
 import uuid
@@ -12,18 +14,90 @@ import uuid
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 
-@router.get("/", response_model=List[TaskResponse])
+@router.get("/")
 async def get_tasks(
-    skip: int = 0,
-    limit: int = 100,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=100),
+    status: Optional[str] = Query(None),
+    category: Optional[str] = Query(None),
+    min_budget: Optional[str] = Query(None),
+    max_budget: Optional[str] = Query(None),
+    sort: Optional[str] = Query("new"),
+    page: int = Query(1, ge=1),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(Task).offset(skip).limit(limit))
+    # Build query with filters
+    query = select(Task).options(selectinload(Task.client))
+    
+    # Apply filters
+    if status:
+        query = query.where(Task.status == status)
+    if category:
+        query = query.where(Task.category == category)
+    if min_budget:
+        query = query.where(Task.budget >= min_budget)
+    if max_budget:
+        query = query.where(Task.budget <= max_budget)
+    
+    # Apply sorting
+    if sort == "budget_desc":
+        query = query.order_by(Task.budget.desc())
+    elif sort == "budget_asc":
+        query = query.order_by(Task.budget.asc())
+    else:  # "new" or default
+        query = query.order_by(Task.created_at.desc())
+    
+    # Apply pagination
+    offset = (page - 1) * limit
+    query = query.offset(offset).limit(limit)
+    
+    result = await db.execute(query)
     tasks = result.scalars().all()
-    return tasks
+    
+    # Get bid counts for all tasks
+    task_ids = [task.id for task in tasks]
+    bid_counts_query = (
+        select(Bid.task_id, func.count(Bid.id).label('bid_count'))
+        .where(Bid.task_id.in_(task_ids))
+        .group_by(Bid.task_id)
+    )
+    bid_counts_result = await db.execute(bid_counts_query)
+    bid_counts = {row.task_id: row.bid_count for row in bid_counts_result}
+    
+    # Format response
+    task_list = []
+    for task in tasks:
+        task_dict = {
+            "id": task.id,
+            "title": task.title,
+            "description": task.description,
+            "budget": task.budget,
+            "deadline": task.deadline,
+            "status": task.status,
+            "category": task.category,
+            "attachments": task.attachments,
+            "client_id": task.client_id,
+            "created_at": task.created_at,
+            "client": {
+                "id": task.client.id,
+                "username": task.client.username
+            } if task.client else None,
+            "bid_count": bid_counts.get(task.id, 0)
+        }
+        task_list.append(task_dict)
+    
+    return {
+        "success": True,
+        "data": {
+            "tasks": task_list,
+            "total": len(task_list),
+            "page": page,
+            "limit": limit
+        }
+    }
 
 
-@router.post("/", response_model=TaskResponse)
+@router.post("/")
 async def create_task(
     task_data: TaskCreate,
     current_user: User = Depends(get_current_user),
@@ -51,7 +125,29 @@ async def create_task(
     await db.commit()
     await db.refresh(new_task)
     
-    return new_task
+    # Return response in expected format
+    task_dict = {
+        "id": new_task.id,
+        "title": new_task.title,
+        "description": new_task.description,
+        "budget": new_task.budget,
+        "deadline": new_task.deadline,
+        "status": new_task.status,
+        "category": new_task.category,
+        "attachments": new_task.attachments,
+        "client_id": new_task.client_id,
+        "created_at": new_task.created_at,
+        "client": {
+            "id": current_user.id,
+            "username": current_user.username
+        },
+        "bid_count": 0
+    }
+    
+    return {
+        "success": True,
+        "data": task_dict
+    }
 
 
 @router.get("/{task_id}", response_model=TaskResponse)
