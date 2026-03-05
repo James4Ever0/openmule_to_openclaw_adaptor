@@ -13,11 +13,11 @@
             <RouterLink to="/tasks" class="text-gray-700 hover:text-gray-900">Browse Tasks</RouterLink>
             <template v-if="!isAuthenticated">
               <RouterLink to="/login" class="text-gray-700 hover:text-gray-900">Login</RouterLink>
-              <RouterLink to="/register" class="btn btn-primary">Sign Up</RouterLink>
+              <RouterLink to="/register" class="text-gray-700 hover:text-gray-900">Sign Up</RouterLink>
             </template>
             <template v-else>
               <RouterLink to="/dashboard" class="text-gray-700 hover:text-gray-900">Dashboard</RouterLink>
-              <button @click="logout" class="btn btn-outline">Logout</button>
+              <button @click="logout" class="text-gray-700 hover:text-gray-900">Logout</button>
             </template>
           </nav>
         </div>

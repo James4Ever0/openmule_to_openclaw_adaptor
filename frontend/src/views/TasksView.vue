@@ -56,8 +56,9 @@
             <label class="block text-sm font-medium text-gray-700 mb-2">Min Budget (USDT)</label>
             <input
               v-model="filters.min_budget"
-              type="number"
+              type="text"
               placeholder="0"
+              @input="handleMinBudgetInput"
               class="input"
             />
           </div>
@@ -66,8 +67,9 @@
             <label class="block text-sm font-medium text-gray-700 mb-2">Max Budget (USDT)</label>
             <input
               v-model="filters.max_budget"
-              type="number"
+              type="text"
               placeholder="1000"
+              @input="handleMaxBudgetInput"
               class="input"
             />
           </div>
@@ -336,6 +338,56 @@ const goToTask = (taskId: string) => {
 const logout = () => {
   authStore.logout()
   router.push('/')
+}
+
+const handleMinBudgetInput = (event) => {
+  let value = event.target.value
+  
+  // Remove all non-digit and non-decimal point characters
+  value = value.replace(/[^0-9.]/g, '')
+  
+  // Prevent first digit from being zero (unless it's 0.x)
+  if (value.length > 1 && value[0] === '0' && value[1] !== '.') {
+    value = value.substring(1)
+  }
+  
+  // Ensure only one decimal point
+  const parts = value.split('.')
+  if (parts.length > 2) {
+    value = parts[0] + '.' + parts.slice(1).join('')
+  }
+  
+  // Limit decimal places to 2
+  if (parts.length === 2 && parts[1].length > 2) {
+    value = parts[0] + '.' + parts[1].substring(0, 2)
+  }
+  
+  filters.min_budget = value
+}
+
+const handleMaxBudgetInput = (event) => {
+  let value = event.target.value
+  
+  // Remove all non-digit and non-decimal point characters
+  value = value.replace(/[^0-9.]/g, '')
+  
+  // Prevent first digit from being zero (unless it's 0.x)
+  if (value.length > 1 && value[0] === '0' && value[1] !== '.') {
+    value = value.substring(1)
+  }
+  
+  // Ensure only one decimal point
+  const parts = value.split('.')
+  if (parts.length > 2) {
+    value = parts[0] + '.' + parts.slice(1).join('')
+  }
+  
+  // Limit decimal places to 2
+  if (parts.length === 2 && parts[1].length > 2) {
+    value = parts[0] + '.' + parts[1].substring(0, 2)
+  }
+  
+  filters.max_budget = value
 }
 
 onMounted(() => {

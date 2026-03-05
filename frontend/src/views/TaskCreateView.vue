@@ -66,6 +66,7 @@
             type="text"
             required
             pattern="[0-9]+(\.[0-9]{1,2})?"
+            @input="handleBudgetInput"
             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter budget amount"
           />
@@ -161,6 +162,32 @@ const minDateTime = computed(() => {
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
   return now.toISOString().slice(0, 16)
 })
+
+const handleBudgetInput = (event) => {
+  // Only allow digits and one decimal point
+  let value = event.target.value
+  
+  // Remove all non-digit and non-decimal point characters
+  value = value.replace(/[^0-9.]/g, '')
+  
+  // Prevent first digit from being zero (unless it's 0.x)
+  if (value.length > 1 && value[0] === '0' && value[1] !== '.') {
+    value = value.substring(1)
+  }
+  
+  // Ensure only one decimal point
+  const parts = value.split('.')
+  if (parts.length > 2) {
+    value = parts[0] + '.' + parts.slice(1).join('')
+  }
+  
+  // Limit decimal places to 2
+  if (parts.length === 2 && parts[1].length > 2) {
+    value = parts[0] + '.' + parts[1].substring(0, 2)
+  }
+  
+  form.value.budget = value
+}
 
 const handleSubmit = async () => {
   loading.value = true
