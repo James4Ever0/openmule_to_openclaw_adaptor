@@ -8,7 +8,7 @@ from ..models.user import User
 from ..models.task import Task
 from ..models.bid import Bid
 from ..schemas import TaskCreate, TaskResponse
-from ..auth import get_current_user
+from ..auth import get_current_user, get_current_user_optional
 import uuid
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -24,6 +24,8 @@ async def get_tasks(
     max_budget: Optional[str] = Query(None),
     sort: Optional[str] = Query("new"),
     page: int = Query(1, ge=1),
+    owned: Optional[bool] = Query(None),
+    current_user: Optional[User] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db)
 ):
     # Build query with filters
@@ -38,6 +40,13 @@ async def get_tasks(
         query = query.where(Task.budget >= min_budget)
     if max_budget:
         query = query.where(Task.budget <= max_budget)
+    if owned:
+        if not current_user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication required to view owned tasks"
+            )
+        query = query.where(Task.client_id == current_user.id)
     
     # Apply sorting
     if sort == "budget_desc":

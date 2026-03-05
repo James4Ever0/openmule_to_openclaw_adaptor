@@ -124,8 +124,8 @@
           >
             Create New Task
           </RouterLink>
-          <RouterLink to="/tasks" class="btn btn-outline w-full">
-            Browse Tasks
+          <RouterLink to="/tasks?owned=true" class="btn btn-outline w-full">
+            Browse My Tasks
           </RouterLink>
           <RouterLink to="/orders" class="btn btn-outline w-full">
             View Orders
@@ -309,12 +309,13 @@ const fetchDashboardData = async () => {
 
     // Role-specific data
     if (user.value?.role === 'client') {
-      // Fetch client's recent tasks
-      const tasksResponse = await tasksApi.getTasks({ limit: 5 })
+      // Fetch client's recent tasks using owned filter
+      const tasksResponse = await tasksApi.getTasks({ 
+        limit: 5, 
+        owned: true 
+      })
       if (tasksResponse.data.success) {
-        recentTasks.value = tasksResponse.data.data.tasks.filter(
-          task => task.client_id === user.value?.id
-        )
+        recentTasks.value = tasksResponse.data.data.tasks
       }
       
       // Calculate stats

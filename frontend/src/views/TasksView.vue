@@ -9,15 +9,15 @@
           </div>
           <nav class="flex space-x-8">
             <RouterLink to="/" class="text-gray-700 hover:text-gray-900">Home</RouterLink>
-            <RouterLink to="/tasks" class="text-gray-900 font-medium">Browse Tasks</RouterLink>
+            <RouterLink to="/tasks" class="text-gray-700 hover:text-gray-900">Browse Tasks</RouterLink>
             <template v-if="!isAuthenticated">
               <RouterLink to="/login" class="text-gray-700 hover:text-gray-900">Login</RouterLink>
-              <RouterLink to="/register" class="btn btn-primary">Sign Up</RouterLink>
+              <RouterLink to="/register" class="text-gray-700 hover:text-gray-900">Sign Up</RouterLink>
             </template>
             <template v-else>
-              <RouterLink to="/task-create" class="btn btn-primary">Create Task</RouterLink>
+              <RouterLink to="/task-create" class="text-gray-700 hover:text-gray-900">Create Task</RouterLink>
               <RouterLink to="/dashboard" class="text-gray-700 hover:text-gray-900">Dashboard</RouterLink>
-              <button @click="logout" class="btn btn-outline">Logout</button>
+              <button @click="logout" class="text-gray-700 hover:text-gray-900">Logout</button>
             </template>
           </nav>
         </div>
@@ -202,13 +202,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { tasksApi } from '@/lib/api'
 import type { Task, TaskFilters } from '@/types'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 
 const loading = ref(false)
@@ -225,8 +226,21 @@ const filters = reactive<TaskFilters>({
   max_budget: '',
   sort: 'new',
   page: 1,
-  limit: 12
+  limit: 12,
+  owned: false
 })
+
+// Initialize filters from URL query parameters
+const initializeFiltersFromQuery = () => {
+  const query = route.query
+  filters.status = (query.status as string) || ''
+  filters.category = (query.category as string) || ''
+  filters.min_budget = (query.min_budget as string) || ''
+  filters.max_budget = (query.max_budget as string) || ''
+  filters.sort = (query.sort as string) || 'new'
+  filters.owned = query.owned === 'true'
+  currentPage.value = parseInt(query.page as string) || 1
+}
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 
@@ -325,8 +339,19 @@ const logout = () => {
 }
 
 onMounted(() => {
+  initializeFiltersFromQuery()
   fetchTasks()
 })
+
+// Watch for route changes to update filters
+watch(
+  () => route.query,
+  () => {
+    initializeFiltersFromQuery()
+    fetchTasks()
+  },
+  { immediate: false }
+)
 </script>
 
 <style scoped>

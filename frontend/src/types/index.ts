@@ -117,6 +117,7 @@ export interface TaskFilters {
   sort?: 'new' | 'budget_desc' | 'budget_asc'
   page?: number
   limit?: number
+  owned?: boolean
 }
 
 export interface ApiResponse<T = any> {

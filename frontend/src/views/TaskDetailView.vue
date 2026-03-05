@@ -12,11 +12,11 @@
             <RouterLink to="/tasks" class="text-gray-700 hover:text-gray-900">Browse Tasks</RouterLink>
             <template v-if="!isAuthenticated">
               <RouterLink to="/login" class="text-gray-700 hover:text-gray-900">Login</RouterLink>
-              <RouterLink to="/register" class="btn btn-primary">Sign Up</RouterLink>
+              <RouterLink to="/register" class="text-gray-700 hover:text-gray-900">Sign Up</RouterLink>
             </template>
             <template v-else>
               <RouterLink to="/dashboard" class="text-gray-700 hover:text-gray-900">Dashboard</RouterLink>
-              <button @click="logout" class="btn btn-outline">Logout</button>
+              <button @click="authStore.logout" class="text-gray-700 hover:text-gray-900">Logout</button>
             </template>
           </nav>
         </div>
@@ -245,6 +245,17 @@
               </button>
             </div>
           </div>
+          
+          <!-- Debug Info (remove in production) -->
+          <div v-if="isAuthenticated && task" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm">
+            <h4 class="font-medium text-yellow-800 mb-2">Debug Info:</h4>
+            <div class="text-yellow-700">
+              <p>Current User ID: {{ user?.id }}</p>
+              <p>Task Client ID: {{ task.client_id }}</p>
+              <p>Can Edit: {{ user?.id === task.client_id }}</p>
+              <p>User Role: {{ user?.role }}</p>
+            </div>
+          </div>
 
           <!-- Similar Tasks -->
           <div class="bg-white rounded-lg shadow p-6">
@@ -337,11 +348,15 @@ const fetchTask = async () => {
   try {
     const response = await tasksApi.getTask(route.params.id as string)
     
-    if (response.data.success) {
+    // Handle both wrapped and direct response formats
+    if (response.data.success && response.data.task) {
       task.value = response.data.task
+    } else {
+      // Direct response format from backend
+      task.value = response.data
     }
   } catch (err: any) {
-    error.value = err.response?.data?.error?.message || 'Failed to fetch task'
+    error.value = err.response?.data?.error?.message || err.response?.data?.message || 'Failed to fetch task'
   } finally {
     loading.value = false
   }
