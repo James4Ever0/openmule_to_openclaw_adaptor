@@ -1,0 +1,1 @@
+docker compose -f docker-compose-psql.yaml exec db psql -U username -c "CREATE DATABASE openmule_db;"

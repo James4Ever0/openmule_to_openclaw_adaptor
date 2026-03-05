@@ -13,7 +13,7 @@ cd backend_python
 if [ ! -d "venv" ]; then
     echo "Creating virtual environment..."
     # python3 -m venv venv
-    uv venv venv
+    uv venv --python python3.11 venv
 fi
 
 # Activate virtual environment
