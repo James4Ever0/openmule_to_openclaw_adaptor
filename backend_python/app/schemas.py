@@ -85,6 +85,21 @@ class TaskBase(BaseModel):
     deadline: datetime
     category: str
     attachments: Optional[List[str]] = None
+    
+    @validator('budget')
+    def validate_budget(cls, v):
+        try:
+            budget_float = float(v)
+        except ValueError:
+            raise ValueError('Budget must be a valid number')
+        
+        if budget_float < 0:
+            raise ValueError('Budget cannot be negative')
+        
+        if budget_float == 0:
+            raise ValueError('Budget must be greater than 0')
+        
+        return v
 
 
 class TaskCreate(TaskBase):
@@ -106,6 +121,21 @@ class BidBase(BaseModel):
     amount: str
     estimated_days: int
     message: str
+    
+    @validator('amount')
+    def validate_amount(cls, v):
+        try:
+            amount_float = float(v)
+        except ValueError:
+            raise ValueError('Amount must be a valid number')
+        
+        if amount_float < 0:
+            raise ValueError('Amount cannot be negative')
+        
+        if amount_float == 0:
+            raise ValueError('Amount must be greater than 0')
+        
+        return v
 
 
 class BidCreate(BidBase):

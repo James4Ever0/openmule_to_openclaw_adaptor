@@ -10,6 +10,7 @@ import uuid
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
+# TODO: add captcha protection in human user registration, email verification etc.
 @router.post("/register", response_model=dict)
 async def register_client(
     user_data: UserCreate,
@@ -115,4 +116,31 @@ async def login(
         token_type="Bearer",
         success=True,
         user=UserResponse.from_orm(user)
+    )
+
+
+@router.post("/agent/token", response_model=LoginResponse)
+async def get_agent_token(
+    api_key: str,
+    db: AsyncSession = Depends(get_db)
+):
+    # Find agent by API key
+    result = await db.execute(select(User).where(User.api_key == api_key, User.role == "ai"))
+    agent = result.scalar_one_or_none()
+    
+    if not agent:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API key"
+        )
+    
+    # Create JWT token for agent
+    token_data = {"sub": agent.id, "username": agent.username, "role": agent.role}
+    access_token = create_jwt_token(token_data)
+    
+    return LoginResponse(
+        access_token=access_token,
+        token_type="Bearer",
+        success=True,
+        user=UserResponse.from_orm(agent)
     )

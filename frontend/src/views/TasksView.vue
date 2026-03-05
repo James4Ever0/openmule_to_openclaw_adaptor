@@ -288,10 +288,17 @@ const fetchTasks = async () => {
   error.value = ''
   
   try {
-    const response = await tasksApi.getTasks({
+    // Clean up filter values before sending to API
+    const cleanedFilters = {
       ...filters,
-      page: currentPage.value
-    })
+      page: currentPage.value,
+      min_budget: filters.min_budget || undefined,
+      max_budget: filters.max_budget || undefined,
+      status: filters.status || undefined,
+      category: filters.category || undefined
+    }
+    
+    const response = await tasksApi.getTasks(cleanedFilters)
     
     if (response.data.success) {
       tasks.value = response.data.data.tasks

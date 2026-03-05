@@ -5,3 +5,8 @@ backend_golang
 
 start_backend_golang.sh
 start_backend_rs.sh
+
+db_backup
+*.sql
+
+*.json

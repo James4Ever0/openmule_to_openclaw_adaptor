@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, func
+from sqlalchemy import select, and_, func, cast, Numeric
 from sqlalchemy.orm import selectinload
 from typing import List, Optional
 from ..database import get_db
@@ -10,6 +10,7 @@ from ..models.bid import Bid
 from ..schemas import TaskCreate, TaskResponse
 from ..auth import get_current_user, get_current_user_optional
 import uuid
+from decimal import Decimal
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -37,9 +38,17 @@ async def get_tasks(
     if category:
         query = query.where(Task.category == category)
     if min_budget:
-        query = query.where(Task.budget >= min_budget)
+        try:
+            min_budget_decimal = Decimal(min_budget)
+            query = query.where(cast(Task.budget, Numeric) >= min_budget_decimal)
+        except (ValueError, TypeError):
+            pass  # Invalid min_budget, ignore filter
     if max_budget:
-        query = query.where(Task.budget <= max_budget)
+        try:
+            max_budget_decimal = Decimal(max_budget)
+            query = query.where(cast(Task.budget, Numeric) <= max_budget_decimal)
+        except (ValueError, TypeError):
+            pass  # Invalid max_budget, ignore filter
     if owned:
         if not current_user:
             raise HTTPException(
@@ -50,11 +59,16 @@ async def get_tasks(
     
     # Apply sorting
     if sort == "budget_desc":
-        query = query.order_by(Task.budget.desc())
+        query = query.order_by(cast(Task.budget, Numeric).desc())
     elif sort == "budget_asc":
-        query = query.order_by(Task.budget.asc())
+        query = query.order_by(cast(Task.budget, Numeric).asc())
     else:  # "new" or default
         query = query.order_by(Task.created_at.desc())
+    
+    # Get total count first (before pagination)
+    count_query = select(func.count()).select_from(query.subquery())
+    count_result = await db.execute(count_query)
+    total_count = count_result.scalar()
     
     # Apply pagination
     offset = (page - 1) * limit
@@ -99,7 +113,7 @@ async def get_tasks(
         "success": True,
         "data": {
             "tasks": task_list,
-            "total": len(task_list),
+            "total": total_count,
             "page": page,
             "limit": limit
         }
@@ -116,6 +130,21 @@ async def create_task(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only clients can create tasks"
+        )
+    
+    # Additional validation for task budget
+    try:
+        budget_float = float(task_data.budget)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Budget must be a valid number"
+        )
+    
+    if budget_float <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Budget must be greater than 0"
         )
     
     new_task = Task(
@@ -159,12 +188,16 @@ async def create_task(
     }
 
 
-@router.get("/{task_id}", response_model=TaskResponse)
+@router.get("/{task_id}")
 async def get_task(
     task_id: str,
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(Task).where(Task.id == task_id))
+    result = await db.execute(
+        select(Task)
+        .options(selectinload(Task.client), selectinload(Task.bids).selectinload(Bid.ai))
+        .where(Task.id == task_id)
+    )
     task = result.scalar_one_or_none()
     
     if not task:
@@ -173,7 +206,39 @@ async def get_task(
             detail="Task not found"
         )
     
-    return task
+    # Format response with bids
+    task_dict = {
+        "id": task.id,
+        "title": task.title,
+        "description": task.description,
+        "budget": task.budget,
+        "deadline": task.deadline,
+        "status": task.status,
+        "category": task.category,
+        "attachments": task.attachments,
+        "client_id": task.client_id,
+        "created_at": task.created_at,
+        "client": {
+            "id": task.client.id,
+            "username": task.client.username
+        } if task.client else None,
+        "bids": [
+            {
+                "id": bid.id,
+                "task_id": bid.task_id,
+                "ai_id": bid.ai_id,
+                "amount": bid.amount,
+                "estimated_days": bid.estimated_days,
+                "message": bid.message,
+                "status": bid.status,
+                "created_at": bid.created_at,
+                "ai_username": bid.ai.username if bid.ai else None
+            }
+            for bid in task.bids
+        ]
+    }
+    
+    return task_dict
 
 
 @router.put("/{task_id}", response_model=TaskResponse)
@@ -196,6 +261,21 @@ async def update_task(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only task owner can update task"
+        )
+    
+    # Additional validation for task budget
+    try:
+        budget_float = float(task_data.budget)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Budget must be a valid number"
+        )
+    
+    if budget_float <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Budget must be greater than 0"
         )
     
     # Update task fields

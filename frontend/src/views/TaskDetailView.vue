@@ -246,7 +246,8 @@
             </div>
           </div>
           
-          <!-- Debug Info (remove in production) -->
+          <!-- Debug Info (TODO: remove in production) -->
+           <!--
           <div v-if="isAuthenticated && task" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm">
             <h4 class="font-medium text-yellow-800 mb-2">Debug Info:</h4>
             <div class="text-yellow-700">
@@ -256,8 +257,10 @@
               <p>User Role: {{ user?.role }}</p>
             </div>
           </div>
+          -->
 
           <!-- Similar Tasks -->
+          <!-- TODO: implement backend api to get similar tasks -->
           <div class="bg-white rounded-lg shadow p-6">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Similar Tasks</h3>
             <div class="space-y-3">

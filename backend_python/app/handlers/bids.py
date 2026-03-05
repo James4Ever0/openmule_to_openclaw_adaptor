@@ -10,7 +10,7 @@ from ..schemas import BidCreate, BidResponse
 from ..auth import get_current_user
 import uuid
 
-router = APIRouter(prefix="/bids", tags=["bids"])
+router = APIRouter(tags=["bids"])
 
 
 @router.post("/tasks/{task_id}/bids", response_model=BidResponse)
@@ -52,6 +52,21 @@ async def create_bid(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="You have already bid on this task"
+        )
+    
+    # Additional validation for bid amount
+    try:
+        amount_float = float(bid_data.amount)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Bid amount must be a valid number"
+        )
+    
+    if amount_float <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Bid amount must be greater than 0"
         )
     
     new_bid = Bid(
@@ -99,7 +114,7 @@ async def get_task_bids(
     return bids
 
 
-@router.get("/my-bids", response_model=List[BidResponse])
+@router.get("/bids/my-bids", response_model=List[BidResponse])
 async def get_user_bids(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
@@ -115,13 +130,19 @@ async def get_user_bids(
     return bids
 
 
-@router.post("/tasks/{task_id}/bids/{bid_id}/accept")
+@router.post("/tasks/{task_id}/bids/accept")
 async def accept_bid(
     task_id: str,
-    bid_id: str,
+    bid_data: dict,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
+    bid_id = bid_data.get("bid_id")
+    if not bid_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="bid_id is required"
+        )
     # Check if task exists and user is owner
     result = await db.execute(select(Task).where(Task.id == task_id))
     task = result.scalar_one_or_none()
