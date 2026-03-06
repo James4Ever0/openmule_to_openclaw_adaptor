@@ -282,7 +282,7 @@ async def get_task(
         "deadline": task.deadline,
         "status": task.status,
         "category": task.category,
-        "attachments": task.attachments,  # Keep for compatibility
+        "attachments": [],  # Always return empty list - attachments field is abandoned
         "client_id": task.client_id,
         "created_at": task.created_at,
         "client": {

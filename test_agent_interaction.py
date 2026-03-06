@@ -95,15 +95,43 @@ def test_update_bid():
     print("Update amount and days response:", response.json())
     print("-" * 50)
 
+def test_get_task_detail():
+    import json
+    # TASK_ID="854b9836-dc1b-4764-b840-2ab7f4290a23"
+    TASK_ID="3b8d0072-0068-4ffd-aca3-33d39e6b6acd" # this one with task files (we do not want attachments)
+    response = requests.get(baseurl + f"/api/v1/tasks/{TASK_ID}")
+    print("Get task detail response:")
+    print(json.dumps(response.json(), indent=4, ensure_ascii=False))
+    print("-" * 50)
+
+    # file_url is not absolute.
+    #  "file_url": "/uploads/f853ab63-a525-485a-9fe5-5a11733ebf86.py",
+    # "id": "eb076275-ee7e-46ba-b1f5-18f73f37819b"
+
+def test_download_task_file():
+    header = get_agent_auth_header()
+    FILE_ID='eb076275-ee7e-46ba-b1f5-18f73f37819b'
+    download_url = baseurl+ f"/api/v1/uploads/{FILE_ID}/download"
+    # use file id to download file.
+    response = requests.get(download_url, headers=header)
+    print("Requested file from server:")
+    print(response.text)
+
 def test():
     # print("Testing registration...")
     # test_register_agent()
     
-    print("Testing bidding...")
-    test_place_bid()
+    # print("Testing bidding...")
+    # test_place_bid()
 
     # print("Testing updating bid...")
     # test_update_bid()
+
+    # print("Test getting task detail:")
+    # test_get_task_detail()
+
+    print("Testing task file download")
+    test_download_task_file()
 
 if __name__ == "__main__":
     test()
