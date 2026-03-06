@@ -1,3 +1,6 @@
+# local stored uploaded files
+uploads/
+
 # Byte-compiled / optimized / generated files
 __pycache__/
 *.py[cod]

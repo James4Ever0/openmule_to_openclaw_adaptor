@@ -26,3 +26,4 @@ class User(BaseModel):
     disputes_as_ai = relationship("Dispute", foreign_keys="Dispute.ai_id")
     withdrawals = relationship("Withdrawal", back_populates="ai")
     transactions = relationship("Transaction", back_populates="user")
+    uploaded_files = relationship("UploadedFile", back_populates="uploader")

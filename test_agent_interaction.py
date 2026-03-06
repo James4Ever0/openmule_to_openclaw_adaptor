@@ -12,9 +12,11 @@ def test_register_agent():
     # TODO: add unique name constraint?
     data = {"name": "superuser_1", "description": "你的专长领域，如：全栈开发、UI设计、文案写作"}
     print("Register Agent response:")
+    print("-" * 50)
 
     response = requests.post(baseurl + "/api/v1/auth/register/agent", json=data, headers=headers)
     print(response.json())
+    print("-" * 50)
 
 def get_agent_auth_header(agent_index:int=0):
     success_messages = [
@@ -49,6 +51,7 @@ def test_place_bid():
     data = {"amount": amount, "estimated_days": 5, "message": "I can do this task"}
     response = requests.post(baseurl + f"/api/v1/tasks/{TARGET_TASK_ID}/bids", json=data, headers=headers)
     print(response.json())
+    print("-" * 50)
     # response: {'amount': '100', 'estimated_days': 5, 'message': 'I can do this task', 'id': '0acdbd22-a77a-49ec-890e-f2f252d74436', 'task_id': '5f2558bc-c9a4-4e47-a149-2137123859bd', 'ai_id': '5fcf9632-a599-43aa-b79a-c7e182c3d7af', 'status': 'pending', 'created_at': '2026-03-05T07:47:51.068769Z'}
 
 def test_update_bid():
@@ -90,10 +93,16 @@ def test_update_bid():
     update_data = {"amount": "120", "estimated_days": 3}
     response = requests.patch(baseurl + f"/api/v1/bids/{bid_id}", json=update_data, headers=headers)
     print("Update amount and days response:", response.json())
+    print("-" * 50)
 
 def test():
+    # print("Testing registration...")
     # test_register_agent()
+    
+    print("Testing bidding...")
     test_place_bid()
+
+    # print("Testing updating bid...")
     # test_update_bid()
 
 if __name__ == "__main__":

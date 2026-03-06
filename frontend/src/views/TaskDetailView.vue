@@ -80,25 +80,42 @@
             <div class="prose max-w-none text-gray-600">
               <p>{{ task.description }}</p>
             </div>
+
+            <!-- <p> Debug: {{task.task_files}}</p> -->
             
-            <!-- Attachments -->
-            <div v-if="task.attachments && task.attachments.length > 0" class="mt-6">
-              <h3 class="text-md font-medium text-gray-900 mb-3">Attachments</h3>
-              <div class="space-y-2">
-                <a
-                  v-for="(attachment, index) in task.attachments"
-                  :key="index"
-                  :href="attachment"
-                  target="_blank"
-                  class="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50"
+            <!-- Task Files with Details -->
+            <div v-if="(task.task_files && task.task_files.length > 0)" class="mt-6">
+            <!-- <div v-if="(task.attachments && task.attachments.length > 0) || (task.task_files && task.task_files.length > 0)" class="mt-6"> -->
+              <h2 class="text-lg font-semibold text-gray-900 mb-4">Task Files</h2>
+              <div v-if="task.task_files && task.task_files.length > 0" class="space-y-2">
+                <div
+                  v-for="taskFile in task.task_files"
+                  :key="taskFile.id"
+                  class="flex items-center justify-between p-3 border border-gray-200 rounded-md hover:bg-gray-50"
                 >
-                  <svg class="h-5 w-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                  </svg>
-                  <span class="text-sm text-gray-600">{{ getFileName(attachment) }}</span>
-                </a>
+                  <div class="flex-1" v-if="taskFile.file">
+                    <div class="flex items-center">
+                      <svg class="h-5 w-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                      </svg>
+                      <span class="text-sm font-medium text-gray-900">{{ taskFile.file.filename }}</span>
+                      <span class="text-xs text-gray-500 ml-2">({{ formatFileSize(taskFile.file.file_size) }})</span>
+                    </div>
+                    <div v-if="taskFile.file.comment" class="mt-1 text-xs text-gray-600 italic">
+                      "{{ taskFile.file.comment }}"
+                    </div>
+                  </div>
+                  <button
+                    v-if="taskFile.file"
+                    @click="downloadTaskFile(taskFile.file)"
+                    class="text-blue-600 hover:text-blue-800 text-sm"
+                  >
+                    Download
+                  </button>
+                </div>
               </div>
             </div>
+
           </div>
 
           <!-- Bids Section -->
@@ -279,8 +296,8 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { tasksApi, bidsApi } from '@/lib/api'
-import type { Task, Bid, CreateBidData } from '@/types'
+import { tasksApi, bidsApi, uploadsApi } from '@/lib/api'
+import type { Task, Bid, CreateBidData, UploadedFile } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -342,6 +359,74 @@ const formatDate = (dateString: string) => {
 
 const getFileName = (url: string) => {
   return url.split('/').pop() || url
+}
+
+const formatFileSize = (sizeStr: string) => {
+  const size = parseInt(sizeStr)
+  if (size < 1024) return size + ' B'
+  if (size < 1024 * 1024) return (size / 1024).toFixed(1) + ' KB'
+  return (size / (1024 * 1024)).toFixed(1) + ' MB'
+}
+
+const downloadAttachment = async (attachment: string) => {
+  console.log("Attachment to download:", attachment)
+  try {
+    // For legacy attachments, try to extract file ID from the URL
+    // If it's a direct URL, download it directly
+    if (attachment.startsWith('/uploads/')) {
+      // This is a file from our system, try to get file ID
+      const filename = attachment.split('/').pop()
+      if (filename) {
+        // Try to find the file by searching user's files
+        const userFilesResponse = await uploadsApi.getUserFiles()
+        const userFiles = userFilesResponse.data.data || []
+        const matchingFile = userFiles.find((f: any) => f.file_url === attachment)
+        
+        if (matchingFile) {
+          // Use secure download
+          const blob = await uploadsApi.downloadFile(matchingFile.id)
+          const url = window.URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = matchingFile.filename
+          document.body.appendChild(a)
+          a.click()
+          window.URL.revokeObjectURL(url)
+          document.body.removeChild(a)
+          return
+        }
+      }
+    }
+    
+    // Fallback: direct download (for external URLs)
+    const a = document.createElement('a')
+    a.href = attachment
+    a.target = '_blank'
+    a.download = getFileName(attachment)
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+  } catch (err: any) {
+    console.error('Download failed:', err)
+    error.value = 'Failed to download file'
+  }
+}
+
+const downloadTaskFile = async (file: UploadedFile) => {
+  try {
+    const blob = await uploadsApi.downloadFile(file.id)
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = file.filename
+    document.body.appendChild(a)
+    a.click()
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+  } catch (err: any) {
+    console.error('Download failed:', err)
+    error.value = 'Failed to download file'
+  }
 }
 
 const fetchTask = async () => {

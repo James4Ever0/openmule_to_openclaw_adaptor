@@ -87,19 +87,16 @@
           />
         </div>
 
-        <!-- Attachments -->
+        <!-- File Attachments -->
         <div>
-          <label for="attachments" class="block text-sm font-medium text-gray-700 mb-2">
-            Attachments (URLs, one per line)
-          </label>
-          <textarea
-            id="attachments"
-            v-model="attachmentsText"
-            rows="3"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="https://example.com/file1.pdf&#10;https://example.com/file2.jpg"
-          ></textarea>
+          <FileUpload 
+            :direct-attach="true"
+            ref="fileUploadComponent"
+          />
         </div>
+
+        <!-- Legacy Attachments (Hidden for compatibility) -->
+        <input type="hidden" v-model="form.attachments" />
 
         <!-- Error Message -->
         <div v-if="error" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
@@ -138,6 +135,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { tasksApi } from '@/lib/api'
+import FileUpload from '@/components/FileUpload.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -152,6 +150,7 @@ const form = ref({
 })
 
 const attachmentsText = ref('')
+const fileUploadComponent = ref(null)
 const loading = ref(false)
 const error = ref('')
 const success = ref('')
@@ -189,21 +188,19 @@ const handleBudgetInput = (event) => {
   form.value.budget = value
 }
 
+const handleFilesAddedToTask = (fileIds) => {
+  // This is called when files are added to a task (for existing tasks)
+  // For new tasks, we'll handle this differently
+  console.log('Files added to task:', fileIds)
+}
+
 const handleSubmit = async () => {
   loading.value = true
   error.value = ''
   success.value = ''
 
   try {
-    // Parse attachments from text area
-    if (attachmentsText.value.trim()) {
-      form.value.attachments = attachmentsText.value
-        .split('\n')
-        .map(url => url.trim())
-        .filter(url => url.length > 0)
-    } else {
-      form.value.attachments = []
-    }
+    console.log('Submitting form...') // Debug log
 
     const response = await tasksApi.createTask(form.value)
 

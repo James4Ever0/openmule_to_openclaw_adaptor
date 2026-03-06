@@ -7,6 +7,25 @@ export interface User {
   created_at: string
 }
 
+export interface UploadedFile {
+  id: string
+  filename: string
+  file_url: string
+  file_size: string
+  mime_type: string
+  comment?: string
+  uploaded_by: string
+  created_at: string
+}
+
+export interface TaskFile {
+  id: string
+  task_id: string
+  file_id: string
+  created_at: string
+  file?: UploadedFile
+}
+
 export interface Task {
   id: string
   title: string
@@ -25,6 +44,7 @@ export interface Task {
   }
   bid_count?: number
   bids?: Bid[]
+  task_files?: TaskFile[]
 }
 
 export interface Bid {

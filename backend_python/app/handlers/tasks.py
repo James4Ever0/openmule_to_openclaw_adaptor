@@ -7,6 +7,8 @@ from ..database import get_db
 from ..models.user import User
 from ..models.task import Task
 from ..models.bid import Bid
+from ..models.uploaded_file import UploadedFile
+from ..models.task_file import TaskFile
 from ..schemas import TaskCreate, TaskResponse
 from ..auth import get_current_user, get_current_user_optional
 import uuid
@@ -155,13 +157,17 @@ async def create_task(
         deadline=task_data.deadline,
         status="open",
         category=task_data.category,
-        attachments=task_data.attachments,
+        attachments=task_data.attachments,  # Keep for compatibility
         client_id=current_user.id
     )
     
     db.add(new_task)
     await db.commit()
     await db.refresh(new_task)
+    
+    # If attachments contain file URLs, try to find and link uploaded files
+    if task_data.attachments:
+        await link_attachments_to_task(new_task.id, task_data.attachments, current_user.id, db)
     
     # Return response in expected format
     task_dict = {
@@ -188,6 +194,42 @@ async def create_task(
     }
 
 
+async def link_attachments_to_task(task_id: str, attachments: List[str], user_id: str, db: AsyncSession):
+    """Helper function to link uploaded files to task based on URLs"""
+    for attachment_url in attachments:
+        # Extract filename from URL to find the uploaded file
+        if attachment_url.startswith('/uploads/'):
+            filename = attachment_url.split('/')[-1]
+            # Find uploaded file by URL
+            result = await db.execute(
+                select(UploadedFile).where(
+                    UploadedFile.file_url == attachment_url,
+                    UploadedFile.uploaded_by == user_id
+                )
+            )
+            uploaded_file = result.scalar_one_or_none()
+            
+            if uploaded_file:
+                # Check if already linked
+                existing_result = await db.execute(
+                    select(TaskFile).where(
+                        TaskFile.task_id == task_id,
+                        TaskFile.file_id == uploaded_file.id
+                    )
+                )
+                existing = existing_result.scalar_one_or_none()
+                
+                if not existing:
+                    # Create task-file link
+                    task_file = TaskFile(
+                        task_id=task_id,
+                        file_id=uploaded_file.id
+                    )
+                    db.add(task_file)
+    
+    await db.commit()
+
+
 @router.get("/{task_id}")
 async def get_task(
     task_id: str,
@@ -195,7 +237,11 @@ async def get_task(
 ):
     result = await db.execute(
         select(Task)
-        .options(selectinload(Task.client), selectinload(Task.bids).selectinload(Bid.ai))
+        .options(
+            selectinload(Task.client), 
+            selectinload(Task.bids).selectinload(Bid.ai),
+            selectinload(Task.task_files).selectinload(TaskFile.file)
+        )
         .where(Task.id == task_id)
     )
     task = result.scalar_one_or_none()
@@ -206,7 +252,28 @@ async def get_task(
             detail="Task not found"
         )
     
-    # Format response with bids
+    # Format task files with file details
+    task_files_with_details = []
+    for task_file in task.task_files:
+        if task_file.file:
+            task_files_with_details.append({
+                "id": task_file.id,
+                "task_id": task_file.task_id,
+                "file_id": task_file.file_id,
+                "created_at": task_file.created_at,
+                "file": {
+                    "id": task_file.file.id,
+                    "filename": task_file.file.filename,
+                    "file_url": task_file.file.file_url,
+                    "file_size": task_file.file.file_size,
+                    "mime_type": task_file.file.mime_type,
+                    "comment": task_file.file.comment,
+                    "uploaded_by": task_file.file.uploaded_by,
+                    "created_at": task_file.file.created_at
+                }
+            })
+    
+    # Format response with bids and task files
     task_dict = {
         "id": task.id,
         "title": task.title,
@@ -215,13 +282,14 @@ async def get_task(
         "deadline": task.deadline,
         "status": task.status,
         "category": task.category,
-        "attachments": task.attachments,
+        "attachments": task.attachments,  # Keep for compatibility
         "client_id": task.client_id,
         "created_at": task.created_at,
         "client": {
             "id": task.client.id,
             "username": task.client.username
         } if task.client else None,
+        "task_files": task_files_with_details,
         "bids": [
             {
                 "id": bid.id,

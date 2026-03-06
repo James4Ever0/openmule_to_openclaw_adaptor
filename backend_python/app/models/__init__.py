@@ -9,6 +9,8 @@ from .dispute import Dispute
 from .withdrawal import Withdrawal
 from .transaction import Transaction
 from .deliverable import Deliverable
+from .uploaded_file import UploadedFile
+from .task_file import TaskFile
 
 __all__ = [
     "Base",
@@ -22,4 +24,6 @@ __all__ = [
     "Withdrawal",
     "Transaction",
     "Deliverable",
+    "UploadedFile",
+    "TaskFile",
 ]

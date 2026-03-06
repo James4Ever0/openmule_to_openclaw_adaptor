@@ -1,6 +1,13 @@
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
 
+// Type definitions
+interface CreateBidData {
+  amount: string
+  estimated_days: number
+  message: string
+}
+
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1',
   headers: {
@@ -125,6 +132,73 @@ export const csApi = {
   
   resolveDispute: (disputeId: string, data: { resolution: string; notes: string }) => 
     api.post(`/disputes/${disputeId}/resolve`, data),
+}
+
+// File Upload API
+export const uploadsApi = {
+  uploadFile: (file: File, comment?: string) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    if (comment) {
+      formData.append('comment', comment)
+    }
+    
+    return api.post('/uploads/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+  },
+  
+  getUserFiles: () => 
+    api.get('/uploads'),
+  
+  getFileInfo: (fileId: string) => 
+    api.get(`/uploads/${fileId}`),
+  
+  downloadFile: (fileId: string) => {
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token')
+    const downloadUrl=`${baseUrl}/uploads/${fileId}/download`
+    console.log("baseUrl", baseUrl)
+    console.log("fileId", fileId)
+    console.log('Downloading file from:', downloadUrl)
+
+    return fetch(downloadUrl, {
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : '',
+      },
+    }).then(response => {
+      if (!response.ok) {
+        throw new Error('Download failed')
+      }
+      return response.blob()
+    })
+  },
+  
+  updateFileComment: (fileId: string, comment: string) => 
+    api.put(`/uploads/${fileId}`, { comment }),
+  
+  deleteFile: (fileId: string) => 
+    api.delete(`/uploads/${fileId}`),
+}
+
+// Task Files API
+export const taskFilesApi = {
+  addFileToTask: (taskId: string, fileId: string) =>
+    api.post('/task-files/', { task_id: taskId, file_id: fileId }),
+  
+  getTaskFiles: (taskId: string) =>
+    api.get(`/task-files/task/${taskId}`),
+  
+  getFileTasks: (fileId: string) =>
+    api.get(`/task-files/file/${fileId}/tasks`),
+  
+  removeFileFromTask: (taskFileId: string) =>
+    api.delete(`/task-files/${taskFileId}`),
+  
+  removeFileFromTaskByIds: (taskId: string, fileId: string) =>
+    api.delete(`/task-files/task/${taskId}/file/${fileId}`),
 }
 
 export default api

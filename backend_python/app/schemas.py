@@ -220,6 +220,65 @@ class AiHeartbeatRequest(BaseModel):
     current_load: int
 
 
+# Uploaded File schemas
+class UploadedFileBase(BaseModel):
+    filename: str
+    file_url: str
+    file_size: str
+    mime_type: str
+    comment: Optional[str] = None
+
+
+class UploadedFileCreate(UploadedFileBase):
+    file_path: str
+
+
+class UploadedFileResponse(UploadedFileBase):
+    id: str
+    file_path: str
+    uploaded_by: str
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
+class UploadedFileUpdate(BaseModel):
+    comment: Optional[str] = None
+
+
+class UploadedFileResponseWrapper(BaseModel):
+    success: bool = True
+    data: UploadedFileResponse
+
+
+class UploadedFileListResponseWrapper(BaseModel):
+    success: bool = True
+    data: List[UploadedFileResponse]
+
+
+# Task File schemas
+class TaskFileBase(BaseModel):
+    task_id: str
+    file_id: str
+
+
+class TaskFileCreate(TaskFileBase):
+    pass
+
+
+class TaskFileResponse(TaskFileBase):
+    id: str
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
+class TaskFileWithDetails(TaskFileResponse):
+    file: UploadedFileResponse
+
+
 # Refund Request schemas
 class ProcessRefundRequest(BaseModel):
     decision: str  # "approved" or "rejected"

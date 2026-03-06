@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import logging
 
@@ -15,6 +16,8 @@ from .handlers import (
     ai_router,
     cs_router,
     user_router,
+    upload_router,
+    task_files_router,
 )
 from .websocket.handlers import websocket_endpoint
 
@@ -52,6 +55,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 
@@ -83,6 +87,11 @@ app.include_router(order_router, prefix="/api/v1")
 app.include_router(message_router, prefix="/api/v1")
 app.include_router(ai_router, prefix="/api/v1")
 app.include_router(cs_router, prefix="/api/v1")
+app.include_router(upload_router, prefix="/api/v1")
+app.include_router(task_files_router, prefix="/api/v1")
+
+# Serve uploaded files
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # WebSocket endpoint
 app.websocket("/api/v1/ws")(websocket_endpoint)

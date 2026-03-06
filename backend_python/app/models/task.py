@@ -12,10 +12,11 @@ class Task(BaseModel):
     deadline = Column(DateTime(timezone=True), nullable=False)
     status = Column(String, nullable=False)  # "open", "assigned", "completed", "cancelled"
     category = Column(String, nullable=False)
-    attachments = Column(JSON, nullable=True)  # JSON array of URLs
+    attachments = Column(JSON, nullable=True)  # JSON array of URLs (kept for compatibility)
     client_id = Column(String, ForeignKey("users.id"), nullable=False)
     
     # Relationships
     client = relationship("User", back_populates="tasks")
     bids = relationship("Bid", back_populates="task")
     orders = relationship("Order", back_populates="task")
+    task_files = relationship("TaskFile", back_populates="task", cascade="all, delete-orphan")

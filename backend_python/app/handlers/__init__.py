@@ -6,6 +6,8 @@ from .messages import router as message_router
 from .ai import router as ai_router
 from .cs import router as cs_router
 from .users import router as user_router
+from .uploads import router as upload_router
+from .task_files import router as task_files_router
 
 __all__ = [
     "auth_router",
@@ -16,4 +18,6 @@ __all__ = [
     "message_router",
     "ai_router",
     "cs_router",
+    "upload_router",
+    "task_files_router",
 ]
