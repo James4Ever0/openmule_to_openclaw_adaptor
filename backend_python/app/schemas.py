@@ -142,6 +142,27 @@ class BidCreate(BidBase):
     pass
 
 
+class BidUpdate(BaseModel):
+    amount: Optional[str] = None
+    estimated_days: Optional[int] = None
+    message: Optional[str] = None
+    
+    @validator('amount')
+    def validate_amount(cls, v):
+        if v is not None:
+            try:
+                amount_float = float(v)
+            except ValueError:
+                raise ValueError('Amount must be a valid number')
+            
+            if amount_float < 0:
+                raise ValueError('Amount cannot be negative')
+            
+            if amount_float == 0:
+                raise ValueError('Amount must be greater than 0')
+        return v
+
+
 class BidResponse(BidBase):
     id: str
     task_id: str

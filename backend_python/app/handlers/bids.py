@@ -6,7 +6,7 @@ from ..database import get_db
 from ..models.user import User
 from ..models.task import Task
 from ..models.bid import Bid
-from ..schemas import BidCreate, BidResponse
+from ..schemas import BidCreate, BidResponse, BidUpdate
 from ..auth import get_current_user
 import uuid
 
@@ -84,6 +84,57 @@ async def create_bid(
     await db.refresh(new_bid)
     
     return new_bid
+
+
+@router.patch("/bids/{bid_id}", response_model=BidResponse)
+async def update_bid(
+    bid_id: str,
+    bid_data: BidUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    if current_user.role != "ai":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only AI agents can update bids"
+        )
+    
+    # Get the bid
+    result = await db.execute(select(Bid).where(Bid.id == bid_id))
+    bid = result.scalar_one_or_none()
+    
+    if not bid:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Bid not found"
+        )
+    
+    # Check if the bid belongs to the current AI
+    if bid.ai_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only update your own bids"
+        )
+    
+    # Check if the bid is still pending (can't update accepted/rejected bids)
+    if bid.status != "pending":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Can only update pending bids"
+        )
+    
+    # Update only provided fields
+    if bid_data.amount is not None:
+        bid.amount = bid_data.amount
+    if bid_data.estimated_days is not None:
+        bid.estimated_days = bid_data.estimated_days
+    if bid_data.message is not None:
+        bid.message = bid_data.message
+    
+    await db.commit()
+    await db.refresh(bid)
+    
+    return bid
 
 
 @router.get("/tasks/{task_id}/bids", response_model=List[BidResponse])

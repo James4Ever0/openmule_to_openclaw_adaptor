@@ -35,17 +35,65 @@ def get_agent_auth_header():
     return {"Authorization": f"Bearer {token_data['access_token']}"}
 
 def test_place_bid():
-    TARGET_TASK_ID="5f2558bc-c9a4-4e47-a149-2137123859bd"
+    TARGET_TASK_ID="5f2558bc-c9a4-4e47-a149-2137123859bd" # already placed a bid and accepted. cannot post a new bid.
+    # {'detail': 'Task is not open for bidding'}
+    # TARGET_TASK_ID="854b9836-dc1b-4764-b840-2ab7f4290a23"
+    # {'detail': 'You have already bid on this task'}
+    
+    amount = '100'
+    # amount = 'not_an_amount'
+    # amount = '-100'
     headers = get_agent_auth_header()
     headers['Content-Type'] = 'application/json'
-    data = {"amount": "100", "estimated_days": 5, "message": "I can do this task"}
-    response = requests.post(baseurl + f"/api/v1/bids/tasks/{TARGET_TASK_ID}/bids", json=data, headers=headers)
+    data = {"amount": amount, "estimated_days": 5, "message": "I can do this task"}
+    response = requests.post(baseurl + f"/api/v1/tasks/{TARGET_TASK_ID}/bids", json=data, headers=headers)
     print(response.json())
     # response: {'amount': '100', 'estimated_days': 5, 'message': 'I can do this task', 'id': '0acdbd22-a77a-49ec-890e-f2f252d74436', 'task_id': '5f2558bc-c9a4-4e47-a149-2137123859bd', 'ai_id': '5fcf9632-a599-43aa-b79a-c7e182c3d7af', 'status': 'pending', 'created_at': '2026-03-05T07:47:51.068769Z'}
 
+def test_update_bid():
+    import json
+    # First get the agent's bids to find a bid ID
+    headers = get_agent_auth_header()
+    
+    # Get my bids
+    response = requests.get(baseurl + "/api/v1/bids/my-bids", headers=headers)
+    my_bids = response.json()
+    print("My bids:")
+    print(json.dumps(my_bids, indent=2))
+    
+    if not my_bids:
+        print("No bids found to update")
+        return
+    
+    # Use the last bid (most recent) for testing
+    bid_id = None
+    for bid in my_bids:
+        if bid['status'] == 'pending':
+            bid_id = my_bids[-1]['id']
+    if not bid_id:
+        print("No bid is at pending status")
+        return
+    print(f"Updating bid: {bid_id}")
+    
+    # Update only the amount
+    update_data = {"amount": "150"}
+    response = requests.patch(baseurl + f"/api/v1/bids/{bid_id}", json=update_data, headers=headers)
+    print("Update amount response:", response.json())
+    
+    # Update only the message
+    update_data = {"message": "I can definitely do this task with high quality!"}
+    response = requests.patch(baseurl + f"/api/v1/bids/{bid_id}", json=update_data, headers=headers)
+    print("Update message response:", response.json())
+    
+    # Update both amount and estimated_days
+    update_data = {"amount": "120", "estimated_days": 3}
+    response = requests.patch(baseurl + f"/api/v1/bids/{bid_id}", json=update_data, headers=headers)
+    print("Update amount and days response:", response.json())
+
 def test():
     # test_register_user()
-    test_place_bid()
+    # test_place_bid()
+    test_update_bid()
 
 if __name__ == "__main__":
     test()
