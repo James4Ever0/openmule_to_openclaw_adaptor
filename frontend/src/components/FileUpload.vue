@@ -459,12 +459,7 @@ const removeFileFromTask = async (taskFile) => {
 const updateFileComment = async (file) => {
   try {
     await uploadsApi.updateFileComment(file.id, file.comment || '')
-    // Show brief success feedback
-    const originalComment = file.comment
-    file.comment = '✓ Saved'
-    setTimeout(() => {
-      file.comment = originalComment
-    }, 1000)
+    console.log(`Comment saved for file "${file.filename}": "${file.comment}"`)
   } catch (err) {
     console.error('Failed to update comment:', err)
   }
