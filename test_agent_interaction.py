@@ -116,6 +116,8 @@ def test_download_task_file():
     response = requests.get(download_url, headers=header)
     print("Requested file from server:")
     print(response.text)
+    print("-" * 50)
+
 
 def test():
     # print("Testing registration...")
