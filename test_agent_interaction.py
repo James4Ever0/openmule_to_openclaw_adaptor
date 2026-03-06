@@ -4,7 +4,7 @@ import requests
 
 baseurl = "http://localhost:3000"
 
-def test_register_user():
+def test_register_agent():
     headers = {
         "Content-Type": "application/json"
     }
@@ -16,12 +16,12 @@ def test_register_user():
     response = requests.post(baseurl + "/api/v1/auth/register/agent", json=data, headers=headers)
     print(response.json())
 
-def get_agent_auth_header():
+def get_agent_auth_header(agent_index:int=0):
     success_messages = [
         {'success': True, 'agent': {'id': '5fcf9632-a599-43aa-b79a-c7e182c3d7af', 'name': '你的名称，仅支持中英文、数字、下划线、减号', 'api_key': 'om_ec00aab7cab94419aab8c16180197986'}, 'message': '注册成功！请立即保存你的 API Key。'},
-        {'success': True, 'agent': {'id': '5fcf9632-a599-43aa-b79a-c7e182c3d7af', 'name': '你的名称，仅支持中英文、数字、下划线、减号', 'api_key': 'om_ec00aab7cab94419aab8c16180197986'}, 'message': '注册成功！请立即保存你的 API Key。'}
+        {'success': True, 'agent': {'id': '0777506b-243e-4b89-a3b0-06a14fd5318c', 'name': 'superuser_1', 'api_key': 'om_e91f69c041e94a28908103e306ce773e'}, 'message': '注册成功！请立即保存你的 API Key。'}
     ]
-    agent_data = success_messages[0]['agent']
+    agent_data = success_messages[agent_index]['agent']
     api_key = agent_data['api_key']
     
     # Exchange API key for JWT token
@@ -35,15 +35,16 @@ def get_agent_auth_header():
     return {"Authorization": f"Bearer {token_data['access_token']}"}
 
 def test_place_bid():
-    TARGET_TASK_ID="5f2558bc-c9a4-4e47-a149-2137123859bd" # already placed a bid and accepted. cannot post a new bid.
+    # TARGET_TASK_ID="5f2558bc-c9a4-4e47-a149-2137123859bd" # already placed a bid and accepted. cannot post a new bid.
     # {'detail': 'Task is not open for bidding'}
-    # TARGET_TASK_ID="854b9836-dc1b-4764-b840-2ab7f4290a23"
+    TARGET_TASK_ID="854b9836-dc1b-4764-b840-2ab7f4290a23"
     # {'detail': 'You have already bid on this task'}
+    print("Bidding task:", TARGET_TASK_ID)
     
     amount = '100'
     # amount = 'not_an_amount'
     # amount = '-100'
-    headers = get_agent_auth_header()
+    headers = get_agent_auth_header(agent_index=1)
     headers['Content-Type'] = 'application/json'
     data = {"amount": amount, "estimated_days": 5, "message": "I can do this task"}
     response = requests.post(baseurl + f"/api/v1/tasks/{TARGET_TASK_ID}/bids", json=data, headers=headers)
@@ -53,7 +54,7 @@ def test_place_bid():
 def test_update_bid():
     import json
     # First get the agent's bids to find a bid ID
-    headers = get_agent_auth_header()
+    headers = get_agent_auth_header(agent_index=1)
     
     # Get my bids
     response = requests.get(baseurl + "/api/v1/bids/my-bids", headers=headers)
@@ -91,9 +92,9 @@ def test_update_bid():
     print("Update amount and days response:", response.json())
 
 def test():
-    # test_register_user()
-    # test_place_bid()
-    test_update_bid()
+    # test_register_agent()
+    test_place_bid()
+    # test_update_bid()
 
 if __name__ == "__main__":
     test()
