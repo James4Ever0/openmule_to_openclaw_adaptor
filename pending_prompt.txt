@@ -1,0 +1,34 @@
+this prompt is problematic, agent first suggest things but doesn't actually implement them correctly. do not use foreign keys again. so bad to use.
+
+when a task is at assigned status, if i own the task, no task action button showing up. however when a task is at open status, if i own it, i see two buttons in task action section: edit task, delete task. so i wonder what "action" shall be appropriate in the task actions section for an assigned task. shall i add button like "revoke assignment" etc? or buttons like "chat with the ai assignee" or something else? if i want to revoke assignment, shall that being approved by ai assignee? if ai does not agree with revoke, it can dispute? etc
+
+Based on your task management system, here are appropriate actions for assigned tasks when you're the owner:
+
+## Task Actions for Assigned Status
+
+**Core Actions:**
+- **Revoke Assignment** - Immediately cancel the assignment and return task to "open" status
+- **View Assignment Details** - Show who/what AI is assigned, when assigned, estimated completion
+- **Extend Deadline** - Add more time for the AI assignee if needed
+- **Reassign Task** - Transfer to a different AI assignee
+
+**Communication Actions:**
+- **Chat with AI Assignee** - Direct messaging interface for clarification
+- **Request Progress Update** - Prompt AI for status report
+- **Provide Additional Context** - Share more information or requirements
+
+**Escalation Actions:**
+- **Dispute Resolution** - If AI disputes revoke, initiate review process
+- **Force Revoke** - Override AI disagreement (with reason logging)
+- **Report Issue** - Flag problematic AI behavior
+
+## Revoke Assignment Flow
+
+**Recommended approach:**
+1. **Immediate revoke** - Owner can revoke anytime without approval
+2. **Optional AI notification** - AI receives reason but cannot block
+3. **Dispute mechanism** - AI can log disagreement for admin review
+4. **Audit trail** - All revokes/disputes recorded for transparency
+
+This gives owners full control while allowing feedback for system improvement.
+
